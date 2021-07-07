@@ -14,17 +14,27 @@ void printBaseFrequency(float * Pow, int N) {
     float vm = 0;
     float va = 0;
     float vb = 0;
+    float vc = 0;
+    float vd = 0;
+    float ncoef;
 
     for (int i = 1; i <= N; i++) {
         if (vm < Pow[i]) {
             vm = Pow[i];
             fm = i;
             va = Pow[i - 1];
-            vb = Pow[i + 1];
+            vb = i > 1 ? Pow[i - 2] : 0.f;
+            vc = Pow[i + 1];
+            vd = Pow[i + 2];
         }
     }
 
-    frequency = fm - va / vm + vb / vm;
+    ncoef = 1 / (vm + va + vb + vc + vd);
+    frequency = fm
+            - va / vm * ncoef
+            - vb / vm * ncoef * 2.f
+            + vc / vm * ncoef
+            + vd / vm * ncoef * 2.f;
 
     printf("Base frequency?: %f\n", frequency);
 }
@@ -56,13 +66,13 @@ void generateSquare(float * Re, float * Im, int N, float f, float amp) {
 
 void fillPow(float * Re, float * Im, float * Pow, int N) {
     int i;
-    float d = 1.f;
+    float p = 1.f;
     for (i = 0; i < N; i++) {
         Pow[i] = (Re[i] * Re[i] + Im[i] * Im[i]);
-        if (d < Pow[i]) d = Pow[i];
+        if (p < Pow[i]) p = Pow[i];
     }
     for (i = 0; i < N; i++) {
-        Pow[i] /= d;
+        Pow[i] /= p;
     }
 }
 
@@ -134,18 +144,19 @@ void test() {
     static float Pow[TAPS_NUM];
 
     generateSine(Re, Im, TAPS_NUM, 2.f, 0.7f);
-    generateSquare(Re, Im, TAPS_NUM, 35.75f, 0.8f);
+    generateSine(Re, Im, TAPS_NUM, 35.21f, 0.8f);
     generateSine(Re, Im, TAPS_NUM, 78.f, 0.5f);
 
     printSignal(Re, TAPS_NUM / 2);
     printDivider(TAPS_NUM / 2);
+    
+    hannWindow(Re, TAPS_NUM);
 
     FFT(Re, Im, TAPS_NUM, log2(TAPS_NUM), FT_DIRECT);
 
     fillPow(Re, Im, Pow, TAPS_NUM);
 
-
-    //    printCoefficients(Re, Im, Pow, TAPS_NUM);
+//    printCoefficients(Re, Im, Pow, TAPS_NUM);
 
     printPow(Pow, TAPS_NUM / 2 + 1);
     printDivider(TAPS_NUM / 2);
