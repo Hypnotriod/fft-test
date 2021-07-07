@@ -4,6 +4,10 @@
 
 #include "FFT.h"
 
+#ifndef M_TWOPI
+#define M_TWOPI (M_PI * 2)
+#endif
+
 #define SIGNAL_TABLE_HEIGHT 20
 #define POW_TABLE_HEIGHT 20
 #define TAPS_NUM 256
@@ -149,7 +153,7 @@ void test() {
 
     printSignal(Re, TAPS_NUM / 2);
     printDivider(TAPS_NUM / 2);
-    
+
     hannWindow(Re, TAPS_NUM);
 
     FFT(Re, Im, TAPS_NUM, log2(TAPS_NUM), FT_DIRECT);
