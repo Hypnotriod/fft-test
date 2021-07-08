@@ -111,6 +111,14 @@ void generateSquare(float * Re, float * Im, int N, float f, float amp) {
     }
 }
 
+void fillPow2(float * Re, float * Im, float * Pow, int N) {
+    int i;
+    float p = log2(N * N * 4) * N;
+    for (i = 0; i < N; i++) {
+        Pow[i] = (Re[i] * Re[i] + Im[i] * Im[i]) / p;
+    }
+}
+
 void fillPow(float * Re, float * Im, float * Pow, int N) {
     int i;
     float p = 1.f;
