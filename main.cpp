@@ -1,4 +1,6 @@
 
+#include <complex>
+
 #include "math.h"
 #include "stdio.h"
 
@@ -79,9 +81,8 @@ void printFrequencies(float * Pow, int N, float threshold) {
                     + vc / vm * ncoef
                     + vd / vm * ncoef * 2.f;
             
+            printf("Frequency #%i: %f, peak: %f\n", n++, frequency, vm);
             vm = 0.f;
-
-            printf("Frequency #%i: %f\n", n++, frequency);
         }
     }
 }
@@ -111,15 +112,7 @@ void generateSquare(float * Re, float * Im, int N, float f, float amp) {
     }
 }
 
-void fillPow2(float * Re, float * Im, float * Pow, int N) {
-    int i;
-    float p = log2(N * N * 4) * N;
-    for (i = 0; i < N; i++) {
-        Pow[i] = (Re[i] * Re[i] + Im[i] * Im[i]) / p;
-    }
-}
-
-void fillPow(float * Re, float * Im, float * Pow, int N) {
+void fillPow1(float * Re, float * Im, float * Pow, int N) {
     int i;
     float p = 1.f;
     for (i = 0; i < N; i++) {
@@ -128,6 +121,14 @@ void fillPow(float * Re, float * Im, float * Pow, int N) {
     }
     for (i = 0; i < N; i++) {
         Pow[i] /= p;
+    }
+}
+
+void fillPow2(float * Re, float * Im, float * Pow, int N) {
+    int i;
+    float p = (4.f / N);
+    for (i = 0; i < N; i++) {
+        Pow[i] = sqrt(Re[i] * Re[i] + Im[i] * Im[i]) * p;
     }
 }
 
@@ -180,15 +181,7 @@ void printCoefficients(float * Re, float * Im, float * Pow, int N) {
 void printDivider(int N) {
     int i;
     for (i = 0; i < N; i++) {
-        printf(" ");
-    }
-    printf("\n");
-    for (i = 0; i < N; i++) {
         printf("_");
-    }
-    printf("\n");
-    for (i = 0; i < N; i++) { 
-        printf(" ");
     }
     printf("\n");
 }
@@ -198,7 +191,7 @@ void test() {
     static float Im[TAPS_NUM];
     static float Pow[TAPS_NUM];
 
-    generateSine(Re, Im, TAPS_NUM, 2.f, 0.77f);
+    generateSine(Re, Im, TAPS_NUM, 2.5f, 1.f);
     generateSine(Re, Im, TAPS_NUM, 35.21f, 0.8f);
     generateSine(Re, Im, TAPS_NUM, 78.f, 0.5f);
     generateSine(Re, Im, TAPS_NUM, 121.8f, 0.7f);
@@ -210,7 +203,7 @@ void test() {
 
     FFT(Re, Im, TAPS_NUM, log2(TAPS_NUM), FT_DIRECT);
 
-    fillPow(Re, Im, Pow, TAPS_NUM);
+    fillPow2(Re, Im, Pow, TAPS_NUM);
 
 //    printCoefficients(Re, Im, Pow, TAPS_NUM);
 
