@@ -13,7 +13,7 @@
 #define TAPS_NUM 256
 
 void printBaseFrequency(float * Pow, int N) {
-    float frequency = 0.f;
+    float frequency = 0;
     float fm = 0;
     float vm = 0;
     float va = 0;
@@ -21,17 +21,21 @@ void printBaseFrequency(float * Pow, int N) {
     float vc = 0;
     float vd = 0;
     float ncoef;
+    int i;
 
-    for (int i = 1; i <= N; i++) {
+    for (i = 1; i <= N; i++) {
         if (vm < Pow[i]) {
             vm = Pow[i];
             fm = i;
-            va = Pow[i - 1];
-            vb = i > 1 ? Pow[i - 2] : 0.f;
-            vc = Pow[i + 1];
-            vd = Pow[i + 2];
         }
     }
+    
+    i = (int)fm;
+    if (i == 0) return;
+    va = Pow[i - 1];
+    vb = i > 1 ? Pow[i - 2] : 0.f;
+    vc = Pow[i + 1];
+    vd = Pow[i + 2];
 
     ncoef = 1 / (vm + va + vb + vc + vd);
     frequency = fm
@@ -41,6 +45,45 @@ void printBaseFrequency(float * Pow, int N) {
             + vd / vm * ncoef * 2.f;
 
     printf("Base frequency?: %f\n", frequency);
+}
+
+void printFrequencies(float * Pow, int N, float threshold) {
+    float frequency = 0;
+    float fm = 0;
+    float vm = 0;
+    float va = 0;
+    float vb = 0;
+    float vc = 0;
+    float vd = 0;
+    float ncoef;
+    int i;
+    int n = 1;
+
+    for (i = 1; i <= N; i++) {
+        if (vm < Pow[i]) {
+            vm = Pow[i];
+            fm = i;
+        }
+        else if (vm > threshold) {
+            i--;
+            va = Pow[i - 1];
+            vb = i > 1 ? Pow[i - 2] : 0.f;
+            vc = Pow[i + 1];
+            vd = Pow[i + 2];
+            i += 3;
+            
+            ncoef = 1 / (vm + va + vb + vc + vd);
+            frequency = fm
+                    - va / vm * ncoef
+                    - vb / vm * ncoef * 2.f
+                    + vc / vm * ncoef
+                    + vd / vm * ncoef * 2.f;
+            
+            vm = 0.f;
+
+            printf("Frequency #%i: %f\n", n++, frequency);
+        }
+    }
 }
 
 void hannWindow(float * data, int N) {
@@ -136,7 +179,7 @@ void printDivider(int N) {
         printf("_");
     }
     printf("\n");
-    for (i = 0; i < N; i++) {
+    for (i = 0; i < N; i++) { 
         printf(" ");
     }
     printf("\n");
@@ -147,9 +190,10 @@ void test() {
     static float Im[TAPS_NUM];
     static float Pow[TAPS_NUM];
 
-    generateSine(Re, Im, TAPS_NUM, 2.f, 0.7f);
+    generateSine(Re, Im, TAPS_NUM, 2.f, 0.77f);
     generateSine(Re, Im, TAPS_NUM, 35.21f, 0.8f);
     generateSine(Re, Im, TAPS_NUM, 78.f, 0.5f);
+    generateSine(Re, Im, TAPS_NUM, 121.8f, 0.7f);
 
     printSignal(Re, TAPS_NUM / 2);
     printDivider(TAPS_NUM / 2);
@@ -166,6 +210,7 @@ void test() {
     printDivider(TAPS_NUM / 2);
 
     printBaseFrequency(Pow, (TAPS_NUM / 2));
+    printFrequencies(Pow, (TAPS_NUM / 2), 0.1f);
 
     fflush(stdout);
 }
