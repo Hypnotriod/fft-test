@@ -39,7 +39,7 @@ void printBaseFrequency(float * Pow, int N) {
     vc = Pow[i + 1];
     vd = Pow[i + 2];
 
-    ncoef = 1 / (vm + va + vb + vc + vd);
+    ncoef = vm / (vm + va + vb + vc + vd);
     frequency = fm
             - va / vm * ncoef
             - vb / vm * ncoef * 2.f
@@ -74,7 +74,7 @@ void printFrequencies(float * Pow, int N, float threshold) {
             vd = Pow[i + 2];
             i += 3;
             
-            ncoef = 1 / (vm + va + vb + vc + vd);
+            ncoef = vm / (vm + va + vb + vc + vd);
             frequency = fm
                     - va / vm * ncoef
                     - vb / vm * ncoef * 2.f
@@ -97,7 +97,7 @@ void hannWindow(float * data, int N) {
 void generateSine(float * Re, float * Im, int N, float f, float amp) {
     int i;
     float p = f * M_TWOPI / N;
-    for (i = 0; i < TAPS_NUM; i++) {
+    for (i = 0; i < N; i++) {
         Re[i] += cos(p * i) * amp;
         Im[i] = 0.0;
     }
@@ -106,7 +106,7 @@ void generateSine(float * Re, float * Im, int N, float f, float amp) {
 void generateSquare(float * Re, float * Im, int N, float f, float amp) {
     int i;
     float p = f * M_TWOPI / N;
-    for (i = 0; i < TAPS_NUM; i++) {
+    for (i = 0; i < N; i++) {
         Re[i] += cos(p * i) > 0 ? amp : -amp;
         Im[i] = 0.0;
     }
@@ -203,7 +203,7 @@ void test() {
 
     FFT(Re, Im, TAPS_NUM, log2(TAPS_NUM), FT_DIRECT);
 
-    fillPow2(Re, Im, Pow, TAPS_NUM);
+    fillPow1(Re, Im, Pow, TAPS_NUM);
 
 //    printCoefficients(Re, Im, Pow, TAPS_NUM);
 
