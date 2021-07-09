@@ -81,7 +81,23 @@ void printFrequencies(float * Pow, int N, float threshold) {
                     + vc / vm * ncoef
                     + vd / vm * ncoef * 2.f;
             
-            printf("Frequency #%i: %f, peak: %f\n", n++, frequency, vm);
+            printf("Frequency #%i: %f\n", n++, frequency);
+            vm = 0.f;
+        }
+    }
+}
+
+void printPeaks(float * Pow, int N, float threshold) {
+    float vm = 0;
+    int i;
+    int n = 1;
+
+    for (i = 1; i <= N; i++) {
+        if (vm < Pow[i]) {
+            vm = Pow[i];
+        }
+        else if (vm > threshold) {
+            printf("Frequency #%i peak: %f\n", n++, vm);
             vm = 0.f;
         }
     }
@@ -112,23 +128,29 @@ void generateSquare(float * Re, float * Im, int N, float f, float amp) {
     }
 }
 
-void fillPow1(float * Re, float * Im, float * Pow, int N) {
+void fillPow(float * Re, float * Im, float * Pow, int N) {
     int i;
-    float p = 1.f;
     for (i = 0; i < N; i++) {
         Pow[i] = (Re[i] * Re[i] + Im[i] * Im[i]);
-        if (p < Pow[i]) p = Pow[i];
-    }
-    for (i = 0; i < N; i++) {
-        Pow[i] /= p;
     }
 }
 
-void fillPow2(float * Re, float * Im, float * Pow, int N) {
+// https://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi
+inline float sqrt7(float x)
+ {
+   unsigned int i = *(unsigned int*) &x;
+   // adjust bias
+   i  += 127 << 23;
+   // approximation of square root
+   i >>= 1;
+   return *(float*) &i;
+ }
+
+void normalizePow(float * Pow, int N) {
     int i;
     float p = (4.f / N);
     for (i = 0; i < N; i++) {
-        Pow[i] = sqrt(Re[i] * Re[i] + Im[i] * Im[i]) * p;
+        Pow[i] = sqrt7(Pow[i]) * p;
     }
 }
 
@@ -203,15 +225,23 @@ void test() {
 
     FFT(Re, Im, TAPS_NUM, log2(TAPS_NUM), FT_DIRECT);
 
-    fillPow1(Re, Im, Pow, TAPS_NUM);
+    fillPow(Re, Im, Pow, TAPS_NUM);
 
 //    printCoefficients(Re, Im, Pow, TAPS_NUM);
 
-    printPow(Pow, TAPS_NUM / 2 + 1);
-    printDivider(TAPS_NUM / 2);
-
+    // Getting more accurate frequencies detection before peaks normalization
     printBaseFrequency(Pow, (TAPS_NUM / 2));
-    printFrequencies(Pow, (TAPS_NUM / 2), 0.1f);
+    printFrequencies(Pow, (TAPS_NUM / 2), 1.f / (2.f / TAPS_NUM));
+    
+    printDivider(TAPS_NUM / 2);
+    
+    normalizePow(Pow, TAPS_NUM);
+    
+    printPow(Pow, TAPS_NUM / 2 + 1);
+    
+    printDivider(TAPS_NUM / 2);
+    
+    printPeaks(Pow, (TAPS_NUM / 2), 0.2f);
 
     fflush(stdout);
 }
