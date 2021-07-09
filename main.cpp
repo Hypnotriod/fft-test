@@ -31,8 +31,8 @@ void printBaseFrequency(float * Pow, int N) {
             fm = i;
         }
     }
-    
-    i = (int)fm;
+
+    i = (int) fm;
     if (i == 0) return;
     va = Pow[i - 1];
     vb = i > 1 ? Pow[i - 2] : 0.f;
@@ -49,10 +49,12 @@ void printBaseFrequency(float * Pow, int N) {
     printf("Base frequency?: %f\n", frequency);
 }
 
-void printFrequencies(float * Pow, int N, float threshold) {
+void printFrequencies(float * Pow, float * NormPow, int N, float threshold) {
     float frequency = 0;
+    float peak = 0;
     float fm = 0;
     float vm = 0;
+    float vmn = 0;
     float va = 0;
     float vb = 0;
     float vc = 0;
@@ -64,41 +66,29 @@ void printFrequencies(float * Pow, int N, float threshold) {
     for (i = 1; i <= N; i++) {
         if (vm < Pow[i]) {
             vm = Pow[i];
+            vmn = NormPow[i];
             fm = i;
-        }
-        else if (vm > threshold) {
+        } else if (vmn > threshold) {
             i--;
             va = Pow[i - 1];
             vb = i > 1 ? Pow[i - 2] : 0.f;
             vc = Pow[i + 1];
             vd = Pow[i + 2];
-            i += 3;
-            
+
             ncoef = vm / (vm + va + vb + vc + vd);
             frequency = fm
                     - va / vm * ncoef
                     - vb / vm * ncoef * 2.f
                     + vc / vm * ncoef
                     + vd / vm * ncoef * 2.f;
-            
-            printf("Frequency #%i: %f\n", n++, frequency);
-            vm = 0.f;
-        }
-    }
-}
 
-void printPeaks(float * Pow, int N, float threshold) {
-    float vm = 0;
-    int i;
-    int n = 1;
+            peak = NormPow[i];
 
-    for (i = 1; i <= N; i++) {
-        if (vm < Pow[i]) {
-            vm = Pow[i];
-        }
-        else if (vm > threshold) {
-            printf("Frequency #%i peak: %f\n", n++, vm);
+            printf("Frequency #%i: %f, peak: %f\n", n++, frequency, peak);
+
             vm = 0.f;
+            vmn = 0.f;
+            i += 3;
         }
     }
 }
@@ -136,21 +126,21 @@ void fillPow(float * Re, float * Im, float * Pow, int N) {
 }
 
 // https://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi
-inline float sqrt7(float x)
- {
-   unsigned int i = *(unsigned int*) &x;
-   // adjust bias
-   i  += 127 << 23;
-   // approximation of square root
-   i >>= 1;
-   return *(float*) &i;
- }
 
-void normalizePow(float * Pow, int N) {
+inline float sqrt7(float x) {
+    unsigned int i = *(unsigned int*) &x;
+    // adjust bias
+    i += 127 << 23;
+    // approximation of square root
+    i >>= 1;
+    return *(float*) &i;
+}
+
+void fillNormalizedPow(float * Pow, float * NormPow, int N) {
     int i;
     float p = (4.f / N);
     for (i = 0; i < N; i++) {
-        Pow[i] = sqrt7(Pow[i]) * p;
+        NormPow[i] = sqrt7(Pow[i]) * p;
     }
 }
 
@@ -203,7 +193,7 @@ void printCoefficients(float * Re, float * Im, float * Pow, int N) {
 void printDivider(int N) {
     int i;
     for (i = 0; i < N; i++) {
-        printf("_");
+        printf("-");
     }
     printf("\n");
 }
@@ -212,11 +202,12 @@ void test() {
     static float Re[TAPS_NUM];
     static float Im[TAPS_NUM];
     static float Pow[TAPS_NUM];
+    static float NormPow[TAPS_NUM];
 
     generateSine(Re, Im, TAPS_NUM, 2.5f, 1.f);
     generateSine(Re, Im, TAPS_NUM, 35.21f, 0.8f);
     generateSine(Re, Im, TAPS_NUM, 78.f, 0.5f);
-    generateSine(Re, Im, TAPS_NUM, 121.8f, 0.7f);
+    generateSine(Re, Im, TAPS_NUM, 121.5f, 0.2f);
 
     printSignal(Re, TAPS_NUM / 2);
     printDivider(TAPS_NUM / 2);
@@ -226,22 +217,14 @@ void test() {
     FFT(Re, Im, TAPS_NUM, log2(TAPS_NUM), FT_DIRECT);
 
     fillPow(Re, Im, Pow, TAPS_NUM);
+    fillNormalizedPow(Pow, NormPow, TAPS_NUM);
+    //printCoefficients(Re, Im, Pow, TAPS_NUM);
 
-//    printCoefficients(Re, Im, Pow, TAPS_NUM);
+    printPow(NormPow, TAPS_NUM / 2 + 1);
+    printDivider(TAPS_NUM / 2);
 
-    // Getting more accurate frequencies detection before peaks normalization
     printBaseFrequency(Pow, (TAPS_NUM / 2));
-    printFrequencies(Pow, (TAPS_NUM / 2), 1.f / (2.f / TAPS_NUM));
-    
-    printDivider(TAPS_NUM / 2);
-    
-    normalizePow(Pow, TAPS_NUM);
-    
-    printPow(Pow, TAPS_NUM / 2 + 1);
-    
-    printDivider(TAPS_NUM / 2);
-    
-    printPeaks(Pow, (TAPS_NUM / 2), 0.2f);
+    printFrequencies(Pow, NormPow, (TAPS_NUM / 2), 0.1f);
 
     fflush(stdout);
 }
