@@ -82,7 +82,8 @@ void printFrequencies(float * Pow, float * NormPow, int N, float threshold) {
                     + vc / vm * ncoef
                     + vd / vm * ncoef * 2.f;
 
-            peak = NormPow[i];
+            peak = (1.f - cos(M_PI_2 * (frequency - fm))) * NormPow[i] / 2.f + NormPow[i];
+            //peak = NormPow[i];
 
             printf("Frequency #%i: %f, peak: %f\n", n++, frequency, peak);
 
@@ -129,10 +130,7 @@ void fillPow(float * Re, float * Im, float * Pow, int N) {
 
 inline float sqrt7(float x) {
     unsigned int i = *(unsigned int*) &x;
-    // adjust bias
-    i += 127 << 23;
-    // approximation of square root
-    i >>= 1;
+    i = (i + (127 << 23)) >> 1;
     return *(float*) &i;
 }
 
